@@ -1,5 +1,7 @@
 package com.example.blog_backend.service;
 
+import com.example.blog_backend.dto.PostDTO;
+import com.example.blog_backend.dto.TagDTO;
 import com.example.blog_backend.entity.Post;
 import com.example.blog_backend.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
@@ -9,13 +11,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class PostService {
     private final PostRepository postRepository;
+    private final CategoryService categoryService;
 
     public Post createPost(Post post) {
         if (postRepository.existsBySlug(post.getSlug())) {
@@ -32,8 +38,13 @@ public class PostService {
         return postRepository.findBySlug(slug);
     }
 
-    public Page<Post> findPublishedPosts(Pageable pageable) {
-        return postRepository.findPublishedPosts(pageable);
+    public Page<PostDTO> findPublishedPosts(Pageable pageable) {
+        return postRepository.findPublishedPosts(pageable).map(PostDTO::convertToDTO);
+    }
+    public List<PostDTO> findAllPosts() {
+        return postRepository.findAll().stream()
+                .map(PostDTO::convertToDTO)
+                .toList();
     }
 
     public Page<Post> findPostsByAuthor(Long authorId, Pageable pageable) {
@@ -48,15 +59,15 @@ public class PostService {
         return postRepository.findPublishedPostsByTag(tagId, pageable);
     }
 
-    public Page<Post> searchPosts(String keyword, Pageable pageable) {
-        return postRepository.findPublishedPostsByKeyword(keyword, pageable);
+    public Page<PostDTO> searchPosts(String keyword, Long categoryId, Pageable pageable) {
+        return postRepository.findPublishedPostsByKeyword(keyword, categoryId, pageable).map(PostDTO::convertToDTO);
     }
 
     public Page<Post> findMostViewedPosts(Pageable pageable) {
         return postRepository.findMostViewedPosts(pageable);
     }
 
-    public Post updatePost(Long id, Post postDetails) {
+    public Post updatePost(Long id, PostDTO postDetails) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
 
@@ -66,13 +77,10 @@ public class PostService {
         post.setContent(postDetails.getContent());
         post.setFeaturedImageUrl(postDetails.getFeaturedImageUrl());
         post.setStatus(postDetails.getStatus());
-        post.setCategory(postDetails.getCategory());
-        post.setTags(postDetails.getTags());
-
-        if (postDetails.getStatus() == Post.Status.PUBLISHED && post.getPublishedAt() == null) {
-            post.setPublishedAt(LocalDateTime.now());
-        }
-
+        post.setCategory(categoryService.findById(postDetails.getCategoryId())
+                .orElseThrow(() -> new RuntimeException("Category not found with ID: " + postDetails.getCategoryId())));
+        if (Objects.nonNull(postDetails.getTags())) post.setTags(postDetails.getTags().stream().map(TagDTO::toEntity).toList());
+        if (postDetails.getStatus() == Post.Status.PUBLISHED && post.getPublishedAt() == null) post.setPublishedAt(LocalDateTime.now());
         return postRepository.save(post);
     }
 
@@ -103,5 +111,15 @@ public class PostService {
         }
 
         return slug;
+    }
+
+    /**
+     * Ottiene i top N articoli in evidenza
+     */
+    public List<PostDTO> getTopFeaturedArticles(int limit) {
+        List<Post> topPosts = postRepository.findTopFeaturedPosts(limit);
+
+        return topPosts.stream()
+                .map(PostDTO::convertToDTO).toList();
     }
 }

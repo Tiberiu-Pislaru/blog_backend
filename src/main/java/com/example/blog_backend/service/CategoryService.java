@@ -1,5 +1,6 @@
 package com.example.blog_backend.service;
 
+import com.example.blog_backend.dto.CategoryDTO;
 import com.example.blog_backend.entity.Category;
 import com.example.blog_backend.repository.CategoryRepository;
 import lombok.RequiredArgsConstructor;
@@ -16,14 +17,14 @@ import java.util.Optional;
 public class CategoryService {
     private final CategoryRepository categoryRepository;
 
-    public Category createCategory(Category category) {
+    public CategoryDTO createCategory(Category category) {
         if (categoryRepository.existsByName(category.getName())) {
             throw new RuntimeException("Category name already exists");
         }
         if (categoryRepository.existsBySlug(category.getSlug())) {
             throw new RuntimeException("Category slug already exists");
         }
-        return categoryRepository.save(category);
+        return CategoryDTO.fromEntity(categoryRepository.save(category));
     }
 
     public Optional<Category> findById(Long id) {
@@ -34,8 +35,8 @@ public class CategoryService {
         return categoryRepository.findBySlug(slug);
     }
 
-    public Page<Category> findAllCategories(Pageable pageable) {
-        return categoryRepository.findAllOrderByName(pageable);
+    public Page<CategoryDTO> findAllCategories(Pageable pageable) {
+        return categoryRepository.findAllOrderByName(pageable).map(CategoryDTO::fromEntity);
     }
 
     public Category updateCategory(Long id, Category categoryDetails) {

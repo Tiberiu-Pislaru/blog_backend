@@ -78,6 +78,9 @@ public class Post {
     @ToString.Exclude
     private List<Tag> tags;
 
+    @Column(name = "is_featured", nullable = false)
+    private boolean isFeatured;
+
     public enum Status {
         DRAFT, PUBLISHED, ARCHIVED
     }

@@ -1,5 +1,8 @@
 package com.example.blog_backend.controller;
 
+import com.example.blog_backend.dto.ApiResponseDTO;
+import com.example.blog_backend.dto.CategoryDTO;
+import com.example.blog_backend.dto.PagedResponseDTO;
 import com.example.blog_backend.entity.Category;
 import com.example.blog_backend.service.CategoryService;
 import lombok.RequiredArgsConstructor;
@@ -19,19 +22,22 @@ public class CategoryController {
     private final CategoryService categoryService;
 
     @GetMapping
-    public ResponseEntity<Page<Category>> getAllCategories(
+    public PagedResponseDTO<CategoryDTO> getAllCategories(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
         Pageable pageable = PageRequest.of(page, size);
-        Page<Category> categories = categoryService.findAllCategories(pageable);
-        return ResponseEntity.ok(categories);
+        Page<CategoryDTO> categories = categoryService.findAllCategories(pageable);
+        return new PagedResponseDTO<>(categories);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Category> getCategoryById(@PathVariable Long id) {
+    public ResponseEntity<CategoryDTO> getCategoryById(@PathVariable Long id) {
         Optional<Category> category = categoryService.findById(id);
-        return category.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+        return category.map(cat ->
+                ResponseEntity.ok(CategoryDTO.fromEntity(cat))
+        )
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/slug/{slug}")
@@ -41,12 +47,12 @@ public class CategoryController {
     }
 
     @PostMapping
-    public ResponseEntity<Category> createCategory(@Valid @RequestBody Category category) {
+    public ApiResponseDTO<CategoryDTO> createCategory(@Valid @RequestBody Category category) {
         try {
-            Category createdCategory = categoryService.createCategory(category);
-            return ResponseEntity.ok(createdCategory);
+            CategoryDTO createdCategory = categoryService.createCategory(category);
+            return ApiResponseDTO.success("Category created successfully.", createdCategory);
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
+            return ApiResponseDTO.error("Error creating category: " + e.getMessage());
         }
     }
 

@@ -1,5 +1,7 @@
 package com.example.blog_backend.controller;
 
+import com.example.blog_backend.dto.PagedResponseDTO;
+import com.example.blog_backend.dto.UserDTO;
 import com.example.blog_backend.entity.User;
 import com.example.blog_backend.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
+
 import java.util.Optional;
 
 @RestController
@@ -19,13 +22,14 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping
-    public ResponseEntity<Page<User>> getAllUsers(
+    public ResponseEntity<PagedResponseDTO<UserDTO>> getAllUsers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
         Pageable pageable = PageRequest.of(page, size);
-        Page<User> users = userService.findActiveUsers(pageable);
-        return ResponseEntity.ok(users);
+        Page<UserDTO> users = userService.findActiveUsers(pageable);
+        PagedResponseDTO<UserDTO> pagedResponseDTO = new PagedResponseDTO<>(users);
+        return ResponseEntity.ok(pagedResponseDTO);
     }
 
     @GetMapping("/{id}")
@@ -41,9 +45,20 @@ public class UserController {
     }
 
     @PostMapping
-    public ResponseEntity<User> createUser(@Valid @RequestBody User user) {
+    public ResponseEntity<User> createUser(@Valid @RequestBody UserDTO user) {
         try {
-            User createdUser = userService.createUser(user);
+            // Convert UserDTO to User entity
+            User newUser = new User();
+            newUser.setUsername(user.getUsername());
+            newUser.setEmail(user.getEmail());
+            newUser.setPassword(user.getPassword());
+            newUser.setFirstName(user.getFirstName());
+            newUser.setLastName(user.getLastName());
+            newUser.setBio(user.getBio());
+            newUser.setProfileImageUrl(user.getProfileImageUrl());
+            newUser.setRole(user.getRole() != null ? user.getRole() : User.Role.USER);
+            newUser.setIsActive(user.getIsActive());
+            User createdUser = userService.createUser(newUser);
             return ResponseEntity.ok(createdUser);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().build();

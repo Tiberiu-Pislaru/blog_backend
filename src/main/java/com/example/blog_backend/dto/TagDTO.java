@@ -1,5 +1,6 @@
 package com.example.blog_backend.dto;
 
+import com.example.blog_backend.entity.Tag;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -23,5 +24,21 @@ public class TagDTO {
 
     private String createdAt;
     private String updatedAt;
-    private Long postCount;
+
+    public Tag toEntity() {
+        Tag tag = new Tag();
+        tag.setId(this.id);
+        tag.setName(this.name);
+        tag.setSlug(this.slug);
+        return tag;
+    }
+
+    public TagDTO fromEntity(Tag tag) {
+        this.id = tag.getId();
+        this.name = tag.getName();
+        this.slug = tag.getSlug();
+        this.createdAt = tag.getCreatedAt().toString();
+        this.updatedAt = tag.getUpdatedAt().toString();
+        return this;
+    }
 }

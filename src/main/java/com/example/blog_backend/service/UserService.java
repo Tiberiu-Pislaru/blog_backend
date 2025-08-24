@@ -1,5 +1,6 @@
 package com.example.blog_backend.service;
 
+import com.example.blog_backend.dto.UserDTO;
 import com.example.blog_backend.entity.User;
 import com.example.blog_backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -42,7 +43,7 @@ public class UserService {
         return userRepository.findById(id);
     }
 
-    public Page<User> findActiveUsers(Pageable pageable) {
+    public Page<UserDTO> findActiveUsers(Pageable pageable) {
         return userRepository.findActiveUsers(pageable);
     }
 

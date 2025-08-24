@@ -1,5 +1,6 @@
 package com.example.blog_backend.dto;
 
+import com.example.blog_backend.entity.Category;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -26,5 +27,24 @@ public class CategoryDTO {
 
     private String createdAt;
     private String updatedAt;
-    private Long postCount;
+
+    public Category toEntity() {
+        Category category = new Category();
+        category.setId(this.id);
+        category.setName(this.name);
+        category.setSlug(this.slug);
+        category.setDescription(this.description);
+        return category;
+    }
+
+    public static CategoryDTO fromEntity(Category category) {
+        CategoryDTO categoryDTO = new CategoryDTO();
+        categoryDTO.setId( category.getId());
+        categoryDTO.setName(category.getName());
+        categoryDTO.setSlug(category.getSlug());
+        categoryDTO.setDescription( category.getDescription());
+        categoryDTO.setCreatedAt(category.getCreatedAt().toString());
+        categoryDTO.setUpdatedAt(category.getUpdatedAt().toString());
+        return categoryDTO;
+    }
 }
